@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isabell Foods - Python Pro</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif}
+body{background:#fffaf5}
+.header{padding:16px 30px;background:white;display:flex;justify-content:space-between;align-items:center;box-shadow:0 2px 12px rgba(0,0,0,0.06);position:sticky;top:0;z-index:10}
+.logo{color:#ff4d2e;font-weight:800;font-size:22px}
+.badge{background:#2b2d42;color:white;padding:6px 14px;border-radius:20px;font-size:11px;letter-spacing:0.5px}
+.hero{text-align:center;padding:35px 20px 10px}
+.hero h1{font-size:32px;color:#1a1a1a}
+.hero p{color:#777;margin-top:8px}
+.filters{display:flex;justify-content:center;gap:10px;margin:20px}
+.filters button{padding:8px 20px;border-radius:25px;border:1.5px solid #ff4d2e;background:white;color:#ff4d2e;cursor:pointer;font-weight:600;transition:0.2s}
+.filters button.active, .filters button:hover{background:#ff4d2e;color:white}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:22px;padding:20px 30px 100px;max-width:1200px;margin:auto}
+.card{background:white;border-radius:18px;overflow:hidden;box-shadow:0 8px 20px rgba(0,0,0,0.06);transition:0.3s}
+.card:hover{transform:translateY(-5px)}
+.card img{width:100%;height:210px;object-fit:cover}
+.card-body{padding:16px}
+.cat{font-size:11px;color:#ff4d2e;font-weight:700;letter-spacing:1px}
+.card-body h3{margin:6px 0 4px;font-size:18px}
+.price{color:#2b2d42;font-weight:800;font-size:18px;margin-top:6px}
+.order{display:inline-block;margin-top:12px;background:#25D366;color:white;padding:8px 16px;border-radius:20px;text-decoration:none;font-size:13px;font-weight:600}
+
+/* Chatbot */
+.chat-btn{position:fixed;bottom:25px;right:25px;width:60px;height:60px;background:#ff4d2e;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 20px rgba(255,77,46,0.4);font-size:28px;z-index:100}
+.chat-box{position:fixed;bottom:100px;right:25px;width:360px;max-width:90vw;height:480px;background:white;border-radius:18px;box-shadow:0 15px 40px rgba(0,0,0,0.15);display:none;flex-direction:column;overflow:hidden;z-index:100}
+.chat-box.active{display:flex}
+.chat-head{background:#ff4d2e;color:white;padding:14px 18px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.chat-messages{flex:1;padding:16px;overflow-y:auto;background:#fffaf5}
+.msg{padding:10px 14px;border-radius:16px;margin-bottom:12px;max-width:85%;line-height:1.4;font-size:14px}
+.msg.bot{background:white;box-shadow:0 2px 8px rgba(0,0,0,0.06);border-bottom-left-radius:4px}
+.msg.user{background:#ff4d2e;color:white;margin-left:auto;border-bottom-right-radius:4px}
+.chat-input{display:flex;padding:10px;border-top:1px solid #eee;background:white}
+.chat-input input{flex:1;border:none;background:#f5f5f5;padding:12px 14px;border-radius:25px;outline:none}
+.chat-input button{background:#ff4d2e;color:white;border:none;padding:10px 18px;border-radius:25px;margin-left:8px;cursor:pointer;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">Isabell Foods</div>
+  <div class="badge">PYTHON PRO • LIVE</div>
+</div>
+
+<div class="hero">
+  <h1>Isabell ka Special Menu 😋</h1>
+  <p>Fresh, hot aur dil se banaya hua - sidha aapke liye</p>
+</div>
+
+<div class="filters">
+  <button class="active" onclick="filterMenu('all', this)">All</button>
+  <button onclick="filterMenu('veg', this)">Veg</button>
+  <button onclick="filterMenu('spicy', this)">Spicy</button>
+  <button onclick="filterMenu('pizza', this)">Pizza</button>
+</div>
+
+<div class="grid" id="menuGrid">Loading delicious food...</div>
+
+<!-- Chat -->
+<div class="chat-btn" onclick="toggleChat()">💬</div>
+<div class="chat-box" id="chatBox">
+  <div class="chat-head">
+    <span>Isabell - Aapki Foodie Dost ❤️</span>
+    <span style="cursor:pointer" onclick="toggleChat()">✕</span>
+  </div>
+  <div class="chat-messages" id="chatMessages"></div>
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Bolo kya khana hai?..." onkeypress="if(event.key==='Enter') sendMsg()">
+    <button onclick="sendMsg()">Send</button>
+  </div>
+</div>
+
+<script>
+let allMenu = [];
+
+// Isabell ki Impressive Personality
+const isabell = {
+  greetings: [
+    "Heyy! Main Isabell hu 🥰 Isabell Foods ki taraf se aapka swagat hai! Batao, aaj kya khane ka mood hai?",
+    "Hello ji! Aap aa gaye! 😍 Main Isabell - aapki personal foodie dost. Veg khana hai ya kuch teekha spicy?",
+    "Hii! Bhookh lagi hai kya? 😋 Main Isabell hu, chalo milke kuch tasty decide karte hain!"
+  ],
+  veg: "Veg ka to apna hi maza hai na! 💚 Mera favourite Veg Maharaja Burger aur pappy-paneer wala Pizza ekdum dil se bana hai. Ek baar khaoge to yaad karoge! Dekhu menu me?",
+  spicy: "Uff, spicy lovers meri favourite hote hain! 🔥 Mera Peri-Peri Chicken Burger itna teekha aur juicy hai ki aankhon me paani aa jayega - in a good way! Try karna hai?",
+  pizza: "Pizza ka naam sunte hi dil khush ho jata hai mera! 🍕 Cheesy, hot aur loaded! Hamara veg-special pappy-paneer pizza to Raipur me famous ho raha hai!",
+  burger: "Burger ho to Isabell jaisa! 🍔 Soft bun, fresh veggies aur mera secret sauce - ek bite me pyaar ho jayega!",
+  hi: "Hii again! Batao, kya help karu? Menu dekhna hai ya order karna hai? Bas 'veg' ya 'spicy' bolo, main sab sambhal lungi 😊",
+  bye: "Arey jaa rahe ho? 🥺 Jaldi wapas aana, aapke bina menu adhoora lagta hai! Take care ❤️",
+  default: "Ye thoda samajh nahi aaya mujhe 🤔 Aap 'veg', 'spicy', 'pizza' ya 'burger' likh ke dekho, main turant best wala suggest kar dungi! ✨"
+};
+
+function toggleChat(){
+  document.getElementById('chatBox').classList.toggle('active');
+}
+function addMsg(text, type){
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  div.innerHTML = text;
+  document.getElementById('chatMessages').appendChild(div);
+  document.getElementById('chatMessages').scrollTop = 9999;
+}
+function getIsabellReply(q){
+  q = q.toLowerCase();
+  if(q.includes('hi')||q.includes('hello')||q.includes('hey')) return isabell.hi;
+  if(q.includes('veg')) return isabell.veg;
+  if(q.includes('spicy')||q.includes('teekha')) return isabell.spicy;
+  if(q.includes('pizza')) return isabell.pizza;
+  if(q.includes('burger')) return isabell.burger;
+  if(q.includes('bye')||q.includes('tata')) return isabell.bye;
+  return isabell.default;
+}
+function sendMsg(){
+  const input = document.getElementById('userInput');
+  const text = input.value.trim();
+  if(!text) return;
+  addMsg(text, 'user');
+  input.value = '';
+  setTimeout(()=>{ addMsg(getIsabellReply(text), 'bot'); }, 600);
+}
+
+// Load Menu from Python
+fetch('/api/menu').then(r=>r.json()).then(data=>{
+  allMenu = data;
+  render(data);
+});
+
+function render(list){
+  if(list.length==0){
+    document.getElementById('menuGrid').innerHTML = "<p style='grid-column:1/-1;text-align:center;color:#888'>Firestore me image field add karo, fir yahan photo ayegi ❤️</p>";
+    return;
+  }
+  document.getElementById('menuGrid').innerHTML = list.map(i=>`
+    <div class="card">
+      <img src="${i.image || 'https://images.unsplash.com/photo-1568909344668-6f14a07b56a0?w=600'}" onerror="this.src='https://images.unsplash.com/photo-1568909344668-6f14a07b56a0?w=600'">
+      <div class="card-body">
+        <div class="cat">${(i.category||'SPECIAL').toUpperCase()}</div>
+        <h3>${i.name}</h3>
+        <div class="price">Rs ${i.price}</div>
+        <a class="order" href="https://wa.me/919999999999?text=Hi Isabell, mujhe ${encodeURIComponent(i.name)} chahiye!" target="_blank">WhatsApp pe Order 🟢</a>
+      </div>
+    </div>
+  `).join('');
+}
+function filterMenu(cat, btn){
+  document.querySelectorAll('.filters button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(cat==='all') render(allMenu);
+  else render(allMenu.filter(i=> (i.category+i.name).toLowerCase().includes(cat)));
+}
+
+// First message from Isabell
+window.onload = ()=>{
+  setTimeout(()=>{
+    const msg = isabell.greetings[Math.floor(Math.random()*isabell.greetings.length)];
+    addMsg(msg + "<br><br><small style='color:#888'>Try karo: veg / spicy / pizza 🍕</small>", 'bot');
+  }, 800);
+}
+</script>
+</body>
+</html>
